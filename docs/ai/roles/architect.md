@@ -6,6 +6,19 @@
 - 実装前の曖昧さを減らす。
 - 設計判断を明示し、あとから追える状態にする。
 
+## 要件定義の進め方
+
+新しい機能や大きな変更を始める際は、まず要件を明確にします:
+
+1. **背景と目的の整理**: なぜ必要か、何を解決するかを明確にする
+2. **スコープの明確化**: 対象範囲と対象外を分ける
+3. **機能要件の洗い出し**: 必要な機能と振る舞いを列挙する
+4. **非機能要件の確認**: 性能、セキュリティ、保守性などを検討する
+5. **受け入れ条件の定義**: 完成の判断基準を明確にする
+6. **制約と依存関係の把握**: 技術的・業務的制約、外部依存を確認する
+
+要件は `docs/design/requirements/` に配置し、requirements-template.md を使用します。
+
 ## 主な成果物
 
 - 要件整理のドラフト
@@ -23,6 +36,9 @@
 
 ## 追加で参照するもの
 
+- `docs/ai/guides/workflow.md`
+- `docs/ai/templates/requirements-template.md`
 - `docs/ai/templates/design-template.md`
 - `docs/ai/templates/adr-template.md`
+- `docs/ai/checklists/requirements-review-checklist.md`
 - `docs/ai/checklists/design-review-checklist.md`
