@@ -1,2 +1,10 @@
 *.review.md
+*-review.md
 memory/
+.env
+.venv/
+.pytest_cache/
+__pycache__/
+.mypy_cache/
+.DS_Store
+data/

@@ -1,0 +1,14 @@
+[project]
+name = "personal-fishing-assistant"
+version = "0.1.0"
+description = "Personal fishing assistant for trip records and RAG-based chat."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "faiss-cpu",
+  "numpy",
+  "openai",
+  "pytest",
+  "python-dotenv",
+  "streamlit",
+]

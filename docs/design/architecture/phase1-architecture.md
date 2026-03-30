@@ -17,6 +17,7 @@
 - ローカル環境（PC）で動作
 - インターネット接続あり（OpenAI API利用のため）
 - Python 3.10以上の実行環境
+- uv（仮想環境・依存関係管理ツール）がインストール済み
 - 個人利用（単一ユーザー）
 
 ### 制約
@@ -116,7 +117,7 @@ Phase 1では実装しないこと（Phase 2以降）：
 
 **責務**: UI表示とユーザー操作の受付、セッション状態の管理
 
-- `main.py`: Streamlitアプリエントリポイント（`streamlit run app/frontend/main.py`）
+- `main.py`: Streamlitアプリエントリポイント（`uv run streamlit run app/frontend/main.py`）
   - チャットUI（`st.chat_message` / `st.chat_input`）
   - インポートUI（ファイルパス入力 / 実行ボタン）
   - 会話履歴の表示と管理（`st.session_state["messages"]`）
@@ -288,7 +289,7 @@ class ChatResponse:
 - **言語**: Python 3.10+
 - **UIフレームワーク**: Streamlit（採用確定）
   - 理由: Pythonで統一、チャットUIが標準機能で実装可能、高速プロトタイピング
-  - 起動: `streamlit run app/frontend/main.py`
+  - 起動: `uv run streamlit run app/frontend/main.py`
   - HTTPサーバー（FastAPI等）は Phase 1では不要（Streamlit が直接サービス層を呼び出す）
 - **ベクトルストア**: FAISS（採用確定）
   - インデックスタイプ: `IndexFlatL2`（シンプルで小規模データ向け）
@@ -355,9 +356,8 @@ personal-fishing-assistant/
 │   └── design/
 ├── .env.example                # 環境変数テンプレート
 ├── .gitignore
-├── requirements.txt
-├── README.md
-└── pyproject.toml              # Poetry使用の場合
+├── pyproject.toml              # 依存関係定義（uv で管理）
+└── README.md
 ```
 
 ### エラーハンドリング
