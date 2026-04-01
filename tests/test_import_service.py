@@ -42,6 +42,7 @@ def build_settings(root: Path) -> Settings:
         embedding_model="text-embedding-3-small",
         openai_timeout_seconds=30,
         search_top_k=5,
+        log_level="INFO",
         records_dir=root / "records",
         vector_store_dir=root / "vector_store",
         logs_dir=root / "logs",
@@ -53,7 +54,7 @@ def test_import_documents_skips_invalid_files_and_saves_valid_ones(tmp_path) -> 
     settings = build_settings(tmp_path)
     settings.records_dir.mkdir(parents=True)
     settings.logs_dir.mkdir(parents=True)
-    (settings.records_dir / "2026-03-01_日立港.md").write_text(
+    (settings.records_dir / "2026 03 01_日立港.md").write_text(
         "かなり長い本文です。" * 4,
         encoding="utf-8",
     )

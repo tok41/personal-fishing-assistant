@@ -15,6 +15,7 @@ def build_settings(root: Path, max_chars: int = 3000) -> Settings:
         embedding_model="text-embedding-3-small",
         openai_timeout_seconds=30,
         search_top_k=5,
+        log_level="INFO",
         records_dir=root / "records",
         vector_store_dir=root / "vector_store",
         logs_dir=root / "logs",
@@ -24,13 +25,13 @@ def build_settings(root: Path, max_chars: int = 3000) -> Settings:
 
 def test_parse_valid_file_returns_correct_document(tmp_path) -> None:
     settings = build_settings(tmp_path)
-    path = tmp_path / "2026-02-15_日立港.md"
+    path = tmp_path / "2026 02 15_日立港.md"
     path.write_text("風が強く、重めのオモリが有効だった。", encoding="utf-8")
 
     result = DocumentParser(settings).parse_file(path)
 
-    assert result.document.id == "2026-02-15_日立港"
-    assert result.document.filename == "2026-02-15_日立港.md"
+    assert result.document.id == "2026 02 15_日立港"
+    assert result.document.filename == "2026 02 15_日立港.md"
     assert result.document.date.isoformat() == "2026-02-15"
     assert result.document.location == "日立港"
     assert "重めのオモリ" in result.document.content
@@ -39,7 +40,7 @@ def test_parse_valid_file_returns_correct_document(tmp_path) -> None:
 
 def test_parse_empty_file_raises_value_error(tmp_path) -> None:
     settings = build_settings(tmp_path)
-    path = tmp_path / "2026-02-15_日立港.md"
+    path = tmp_path / "2026 02 15_日立港.md"
     path.write_text("", encoding="utf-8")
 
     with pytest.raises(ValueError, match="empty"):
@@ -48,18 +49,18 @@ def test_parse_empty_file_raises_value_error(tmp_path) -> None:
 
 def test_parse_large_file_attaches_warning(tmp_path) -> None:
     settings = build_settings(tmp_path, max_chars=10)
-    path = tmp_path / "2026-03-01_那珂湊.md"
+    path = tmp_path / "2026 03 01_那珂湊.md"
     path.write_text("あ" * 11, encoding="utf-8")
 
     result = DocumentParser(settings).parse_file(path)
 
     assert result.warning is not None
-    assert result.warning.filename == "2026-03-01_那珂湊.md"
+    assert result.warning.filename == "2026 03 01_那珂湊.md"
 
 
 def test_parse_file_exactly_at_limit_has_no_warning(tmp_path) -> None:
     settings = build_settings(tmp_path, max_chars=10)
-    path = tmp_path / "2026-03-01_那珂湊.md"
+    path = tmp_path / "2026 03 01_那珂湊.md"
     path.write_text("あ" * 10, encoding="utf-8")
 
     result = DocumentParser(settings).parse_file(path)

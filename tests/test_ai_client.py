@@ -44,6 +44,18 @@ class FakeOpenAIClient:
         self.responses = FakeResponsesAPI()
 
 
+class RecordingLogger:
+    def __init__(self):
+        self.info_calls: list[tuple[str, tuple[object, ...]]] = []
+        self.debug_calls: list[tuple[str, tuple[object, ...]]] = []
+
+    def info(self, message: str, *args: object) -> None:
+        self.info_calls.append((message, args))
+
+    def debug(self, message: str, *args: object) -> None:
+        self.debug_calls.append((message, args))
+
+
 def build_settings(tmpdir: str) -> Settings:
     root = Path(tmpdir)
     return Settings(
@@ -52,6 +64,7 @@ def build_settings(tmpdir: str) -> Settings:
         embedding_model="text-embedding-3-small",
         openai_timeout_seconds=30,
         search_top_k=5,
+        log_level="INFO",
         records_dir=root / "records",
         vector_store_dir=root / "vector_store",
         logs_dir=root / "logs",
@@ -59,9 +72,11 @@ def build_settings(tmpdir: str) -> Settings:
     )
 
 
-def test_generate_response_includes_record_context(tmp_path) -> None:
+def test_generate_response_includes_record_context(tmp_path, monkeypatch) -> None:
     settings = build_settings(str(tmp_path))
     fake_client = FakeOpenAIClient()
+    recording_logger = RecordingLogger()
+    monkeypatch.setattr("app.core.ai_client.get_logger", lambda _: recording_logger)
     ai_client = AIClient(settings, client=fake_client)
     document = Document(
         id="2026-02-15_日立港",
@@ -79,11 +94,25 @@ def test_generate_response_includes_record_context(tmp_path) -> None:
     sent = fake_client.responses.last_request["input"][1]["content"]
     assert "2026-02-15_日立港.md" in sent
     assert "次回の注意点は？" in sent
+    assert recording_logger.info_calls == [
+        ("Calling OpenAI Responses API model=%s records=%d", ("gpt-5-mini", 1)),
+        ("OpenAI Responses API call completed successfully.", ()),
+    ]
+    assert recording_logger.debug_calls == [
+        (
+            "Prompt lengths system=%d user=%d",
+            (
+                len(fake_client.responses.last_request["input"][0]["content"]),
+                len(fake_client.responses.last_request["input"][1]["content"]),
+            ),
+        )
+    ]
 
 
-def test_generate_response_without_records_requests_fallback(tmp_path) -> None:
+def test_generate_response_without_records_requests_fallback(tmp_path, monkeypatch) -> None:
     settings = build_settings(str(tmp_path))
     fake_client = FakeOpenAIClient()
+    monkeypatch.setattr("app.core.ai_client.get_logger", lambda _: RecordingLogger())
     ai_client = AIClient(settings, client=fake_client)
 
     response = ai_client.generate_response("一般的な仕掛けは？", [])
@@ -95,6 +124,7 @@ def test_generate_response_without_records_requests_fallback(tmp_path) -> None:
 
 def test_generate_response_converts_openai_timeout_to_application_timeout(tmp_path, monkeypatch) -> None:
     settings = build_settings(str(tmp_path))
+    monkeypatch.setattr("app.core.ai_client.get_logger", lambda _: RecordingLogger())
     ai_client = AIClient(settings, client=TimeoutOpenAIClient())
     monkeypatch.setattr("app.core.ai_client.OPENAI_TIMEOUT_EXCEPTIONS", (FakeTimeoutError,))
 

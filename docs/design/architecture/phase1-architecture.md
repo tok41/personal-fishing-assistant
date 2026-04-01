@@ -179,8 +179,10 @@ Phase 1では実装しないこと（Phase 2以降）：
   - OpenAI APIキー
   - ディレクトリパス
   - 検索パラメータ（K=5など）
+  - ログレベル（`LOG_LEVEL`、デフォルト: `INFO`）
 
 - `utils/logger.py`: ログ管理
+  - `settings.log_level` に従ってログレベルを設定
 - `utils/validators.py`: バリデーション関数
 
 ### データフロー
@@ -222,14 +224,19 @@ Phase 1では実装しないこと（Phase 2以降）：
    - クエリをベクトル化
    - FAISSで類似検索（IndexFlatL2、L2距離で評価）
    - 上位5件を取得
+   - [INFO] クエリテキスト・ヒット件数・ヒットしたファイル名をログ出力
+   - [DEBUG] 各レコードの距離スコアをログ出力
    ↓
 5. AIClient.generate_response(query, documents)
    - プロンプト生成
      - システムプロンプト
      - 検索された記録（0件の場合は含めない）
      - ユーザーの質問
+   - [INFO] API 呼び出し開始（モデル名・レコード件数）をログ出力
+   - [DEBUG] プロンプト文字数（system/user それぞれ）をログ出力
    - OpenAI API呼び出し（gpt-5-mini）
    - レスポンス取得
+   - [INFO] API 正常応答をログ出力
    ↓
 6. Streamlit が st.session_state["messages"] にアシスタントメッセージを追加
    - ChatMessage(role="assistant", content="AIの回答")
@@ -245,7 +252,7 @@ Phase 1では実装しないこと（Phase 2以降）：
 @dataclass
 class Document:
     id: str                 # ファイル名をベースにしたID
-    filename: str           # 元のファイル名（例: 2026-02-15_日立港.md）
+    filename: str           # 元のファイル名（例: 2026 03 29_日立港.md）
     content: str            # Markdownの全文
     date: Optional[date]    # ファイル名から抽出した日付
     location: Optional[str] # ファイル名から抽出した場所
@@ -301,7 +308,7 @@ class ChatResponse:
 ```
 data/
 ├── records/           # Markdownファイル（Git管理外）
-│   ├── 2026-02-15_日立港.md
+│   ├── 2026 03 29_日立港.md
 │   └── ...
 ├── vector_store/      # FAISSインデックス（Git管理外）
 │   ├── index.faiss
@@ -381,8 +388,29 @@ if not settings.OPENAI_API_KEY:
 #### チャット時のエラー
 
 - **検索結果0件**: `has_records=False` でフォールバック、一般回答を生成（UI変化なし）
-- **OpenAI APIエラー**: `st.error()` でエラーメッセージを表示
-- **タイムアウト（30秒）**: `st.error()` でタイムアウトメッセージを表示
+- **OpenAI APIエラー**: `st.error()` でエラーメッセージを表示、`logger.exception()` でログファイルに記録
+- **タイムアウト（30秒）**: `st.error()` でタイムアウトメッセージを表示、`logger.warning()` でログファイルに記録
+
+### ロギング設計
+
+ログレベルは環境変数 `LOG_LEVEL` で切り替える（デフォルト: `INFO`）。
+
+| レベル | タイミング | 内容 |
+|--------|-----------|------|
+| INFO | 検索実行後 | クエリテキスト・ヒット件数・ヒットしたファイル名 |
+| INFO | API 呼び出し前 | モデル名・渡すレコード件数 |
+| INFO | API 応答後 | 正常完了の確認 |
+| INFO | エラー・例外発生時 | タイムアウト、APIエラーなど |
+| DEBUG | 検索実行後 | 各レコードの距離スコア |
+| DEBUG | API 呼び出し前 | プロンプト文字数（system/user それぞれ） |
+
+**記録しないもの**: プロンプト全文、API レスポンス全文（ログ肥大化を防ぐため）
+
+**実装箇所**:
+- `app/config/settings.py`: `log_level` フィールドを追加（`LOG_LEVEL` 環境変数から取得）
+- `app/utils/logger.py`: `get_logger()` が `settings.log_level` を参照するよう修正
+- `app/services/chat_service.py`: 検索結果の INFO/DEBUG ログを追加
+- `app/core/ai_client.py`: API 呼び出し前後の INFO/DEBUG ログを追加
 
 ## 検討した代替案
 

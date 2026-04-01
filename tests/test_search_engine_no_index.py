@@ -40,6 +40,7 @@ def build_settings(tmpdir: str) -> Settings:
         embedding_model="text-embedding-3-small",
         openai_timeout_seconds=30,
         search_top_k=5,
+        log_level="INFO",
         records_dir=root / "records",
         vector_store_dir=root / "vector_store",
         logs_dir=root / "logs",

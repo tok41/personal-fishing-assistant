@@ -4,6 +4,7 @@ from typing import Any
 
 from app.config.settings import Settings
 from app.models.domain import ChatResponse, Document
+from app.utils.logger import get_logger
 
 try:
     from openai import APITimeoutError, OpenAI
@@ -25,6 +26,7 @@ class AIClient:
     def __init__(self, app_settings: Settings, client: Any | None = None):
         self._settings = app_settings
         self._client = client
+        self._logger = get_logger(__name__)
 
     def has_api_key(self) -> bool:
         return bool(self._settings.openai_api_key)
@@ -40,6 +42,16 @@ class AIClient:
     def generate_response(self, query: str, documents: list[Document]) -> ChatResponse:
         client = self._get_client()
         messages = self._build_messages(query, documents)
+        self._logger.info(
+            "Calling OpenAI Responses API model=%s records=%d",
+            self._settings.chat_model,
+            len(documents),
+        )
+        self._logger.debug(
+            "Prompt lengths system=%d user=%d",
+            len(messages[0]["content"]),
+            len(messages[1]["content"]),
+        )
         try:
             response = client.responses.create(
                 model=self._settings.chat_model,
@@ -50,6 +62,7 @@ class AIClient:
             raise AIClientTimeoutError(
                 f"OpenAI API request timed out after {self._settings.openai_timeout_seconds} seconds."
             ) from exc
+        self._logger.info("OpenAI Responses API call completed successfully.")
         message = self._extract_text(response)
         return ChatResponse(
             message=message,

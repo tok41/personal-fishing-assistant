@@ -24,6 +24,7 @@ class Settings:
     embedding_model: str
     openai_timeout_seconds: int
     search_top_k: int
+    log_level: str
     records_dir: Path
     vector_store_dir: Path
     logs_dir: Path
@@ -38,6 +39,7 @@ def load_settings() -> Settings:
         embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
         openai_timeout_seconds=int(os.getenv("OPENAI_TIMEOUT_SECONDS", "30")),
         search_top_k=int(os.getenv("SEARCH_TOP_K", "5")),
+        log_level=os.getenv("LOG_LEVEL", "INFO"),
         records_dir=Path(os.getenv("RECORDS_DIR", data_dir / "records")),
         vector_store_dir=Path(os.getenv("VECTOR_STORE_DIR", data_dir / "vector_store")),
         logs_dir=Path(os.getenv("LOGS_DIR", data_dir / "logs")),

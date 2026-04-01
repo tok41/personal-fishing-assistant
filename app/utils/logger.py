@@ -8,10 +8,10 @@ from app.config.settings import settings
 
 def get_logger(name: str, *, log_file: Path | None = None) -> logging.Logger:
     logger = logging.getLogger(name)
+    logger.setLevel(_resolve_log_level(settings.log_level))
     if logger.handlers:
         return logger
 
-    logger.setLevel(logging.INFO)
     logger.propagate = False
 
     formatter = logging.Formatter(
@@ -28,3 +28,10 @@ def get_logger(name: str, *, log_file: Path | None = None) -> logging.Logger:
     logger.addHandler(file_handler)
 
     return logger
+
+
+def _resolve_log_level(log_level: str) -> int:
+    resolved_level = getattr(logging, log_level.upper(), None)
+    if isinstance(resolved_level, int):
+        return resolved_level
+    return logging.INFO
